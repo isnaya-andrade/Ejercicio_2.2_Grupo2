@@ -1,0 +1,24 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Ejercicio_2._2_Grupo2"
+             x:Class="Ejercicio_2._2_Grupo2.MainPage"
+             Title="Firma Digital">
+    <VerticalStackLayout Padding="20" Spacing="15">
+    
+        <Frame BorderColor="Gray" CornerRadius="10" Padding="0" Margin="0,10">
+            <local:SignaturePadView x:Name="signaturePad"
+                                    BackgroundColor="LightGray"
+                                    HeightRequest="200" />
+        </Frame>
+
+     
+        <Entry x:Name="txtNombre" Placeholder="Nombre" />
+
+        <Entry x:Name="txtDescripcion" Placeholder="Descripción" />
+
+        <HorizontalStackLayout Spacing="10" HorizontalOptions="FillAndExpand">
+            <Button x:Name="btnGuardar" Text="Guardar" HorizontalOptions="FillAndExpand" Clicked="BtnGuardar_Clicked" />
+            <Button x:Name="btnMostrar" Text="Ver Listado" HorizontalOptions="FillAndExpand" Clicked="BtnMostrar_Clicked" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

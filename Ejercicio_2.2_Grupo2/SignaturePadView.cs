@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
+using System.IO;
+using System.Linq;
+using System.Diagnostics;
+using SkiaSharp;
+using PointF = Microsoft.Maui.Graphics.PointF;
 
 namespace Ejercicio_2._2_Grupo2
 {
@@ -18,11 +18,9 @@ namespace Ejercicio_2._2_Grupo2
         public SignaturePadView()
         {
             this.Drawable = this;
-
             var panGesture = new PanGestureRecognizer();
             panGesture.PanUpdated += OnPanUpdated;
             GestureRecognizers.Add(panGesture);
-
             this.StartInteraction += OnStartInteraction;
             this.DragInteraction += OnDragInteraction;
             this.EndInteraction += OnEndInteraction;
@@ -43,7 +41,6 @@ namespace Ejercicio_2._2_Grupo2
         private void OnDragInteraction(object sender, TouchEventArgs e)
         {
             if (!isDrawing) return;
-
             var point = e.Touches.FirstOrDefault();
             if (point != null)
             {
@@ -68,7 +65,6 @@ namespace Ejercicio_2._2_Grupo2
                     lastPoint = new PointF((float)e.TotalX, (float)e.TotalY);
                     points.Add(lastPoint);
                     break;
-
                 case GestureStatus.Running:
                     if (isDrawing)
                     {
@@ -77,12 +73,10 @@ namespace Ejercicio_2._2_Grupo2
                         lastPoint = currentPoint;
                     }
                     break;
-
                 case GestureStatus.Completed:
                     isDrawing = false;
                     break;
             }
-
             Invalidate();
         }
 
@@ -96,7 +90,6 @@ namespace Ejercicio_2._2_Grupo2
         {
             canvas.StrokeColor = Colors.Black;
             canvas.StrokeSize = 3;
-
             if (points.Count > 1)
             {
                 for (int i = 1; i < points.Count; i++)
@@ -109,32 +102,86 @@ namespace Ejercicio_2._2_Grupo2
 
         public async Task<Stream> GetImageStreamAsync()
         {
-            return Stream.Null;
-        }
+            try
+            {
+                if (IsBlank())
+                {
+                    return null;
+                }
 
+                float minX = points.Min(p => p.X);
+                float maxX = points.Max(p => p.X);
+                float minY = points.Min(p => p.Y);
+                float maxY = points.Max(p => p.Y);
+
+                float padding = 20;
+                int width = (int)(maxX - minX + 2 * padding);
+                int height = (int)(maxY - minY + 2 * padding);
+
+                using (var bitmap = new SKBitmap(width, height))
+                using (var canvas = new SKCanvas(bitmap))
+                {
+                    canvas.Clear(SKColors.White);
+
+                    var paint = new SKPaint
+                    {
+                        Color = SKColors.Black,
+                        StrokeWidth = 3,
+                        IsAntialias = true,
+                        Style = SKPaintStyle.Stroke
+                    };
+
+                    var adjustedPoints = points.Select(p => new SKPoint(
+                        p.X - minX + padding,
+                        p.Y - minY + padding
+                    )).ToList();
+
+                    for (int i = 1; i < adjustedPoints.Count; i++)
+                    {
+                        canvas.DrawLine(
+                            adjustedPoints[i - 1].X,
+                            adjustedPoints[i - 1].Y,
+                            adjustedPoints[i].X,
+                            adjustedPoints[i].Y,
+                            paint
+                        );
+                    }
+
+                    using (var image = SKImage.FromBitmap(bitmap))
+                    using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+                    {
+                        var memoryStream = new MemoryStream();
+                        data.SaveTo(memoryStream);
+                        memoryStream.Position = 0;
+                        return memoryStream;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error al crear la imagen de la firma: {ex.Message}");
+                return null;
+            }
+        }
 
         public bool IsBlank()
         {
-     
             if (points == null || points.Count == 0)
                 return true;
-
             if (points.Count >= 2)
             {
                 float minX = points.Min(p => p.X);
                 float maxX = points.Max(p => p.X);
                 float minY = points.Min(p => p.Y);
                 float maxY = points.Max(p => p.Y);
-
                 float area = (maxX - minX) * (maxY - minY);
-                float minArea = 100; 
-
+                float minArea = 100;
                 if (area < minArea)
                     return true;
             }
-
             return false;
         }
 
+        
     }
 }

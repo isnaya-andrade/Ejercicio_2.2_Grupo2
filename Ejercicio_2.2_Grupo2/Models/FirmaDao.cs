@@ -29,5 +29,12 @@ namespace Ejercicio_2._2_Grupo2.Models
             var firmas = await _database.GetFirmasAsync();
             cb(firmas);
         }
+
+        public Task<List<Firma>> obtener()
+        {
+            return _database.GetFirmasAsync();
+           
+        }
+
     }
 }

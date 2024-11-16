@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Diagnostics;
 using Ejercicio_2._2_Grupo2.Models;
+using Ejercicio_2._2_Grupo2.Views;
 
 
 namespace Ejercicio_2._2_Grupo2
@@ -27,33 +28,72 @@ namespace Ejercicio_2._2_Grupo2
             }
         }
 
-        private async System.Threading.Tasks.Task SaveDataAsync()
+        private async Task SaveDataAsync()
         {
-            try
+            if (signaturePad == null || !signaturePad.IsBlank())
             {
-                var nombre = txtNombre.Text;
-                var description = txtDescripcion.Text;
-                var signatureImage = await signaturePad.GetImageStreamAsync();
-                byte[] signatureData;
-
-                using (var memoryStream = new MemoryStream())
+                try
                 {
-                    await signatureImage.CopyToAsync(memoryStream);
-                    signatureData = memoryStream.ToArray();
+
+                    if (string.IsNullOrWhiteSpace(txtNombre.Text))
+                    {
+                        await DisplayAlert("Error", "El nombre es requerido", "OK");
+                        return;
+                    }
+
+                    var nombre = txtNombre.Text.Trim();
+                    var description = txtDescripcion.Text?.Trim() ?? string.Empty;
+
+                    using var signatureImage = await signaturePad.GetImageStreamAsync();
+
+                    if (signatureImage == null)
+                    {
+                        await DisplayAlert("Error", "No se pudo obtener la imagen de la firma", "OK");
+                        return;
+                    }
+
+                    byte[] signatureData;
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await signatureImage.CopyToAsync(memoryStream);
+                        signatureData = memoryStream.ToArray();
+                    }
+
+                    if (signatureData == null || signatureData.Length == 0)
+                    {
+                        await DisplayAlert("Error", "La firma está vacía", "OK");
+                        return;
+                    }
+
+                    var firma = new Firma(signatureData, nombre, description);
+                    await Task.Run(() => new FirmaDao().guardar(firma));
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        txtDescripcion.Text = string.Empty;
+                        txtNombre.Text = string.Empty;
+                        signaturePad.Clear();
+                    });
+
+                    await DisplayAlert("Registro Exitoso", "¡La firma se creó con éxito!", "Aceptar");
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error al guardar la firma: {ex.Message}");
+                    Debug.WriteLine($"StackTrace: {ex.StackTrace}");
 
-                (new FirmaDao()).guardar(new Firma(signatureData, nombre,description));
+                    string errorMessage = "Error al guardar la firma";
+                    if (Debugger.IsAttached)
+                    {
+                        errorMessage += $"\n{ex.Message}";
+                    }
 
-                txtDescripcion.Text = string.Empty;
-                txtNombre.Text = string.Empty;
-                signaturePad.Clear();
-
-                await DisplayAlert("Registro Exitoso", "¡La firma se creó con éxito!", "Aceptar");
+                    await DisplayAlert("Error", errorMessage, "Aceptar");
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.WriteLine($"Error: {ex}");
-                await DisplayAlert("Error", "¡Error al guardar firma!", "Aceptar");
+                await DisplayAlert("Error", "Por favor, dibuje una firma antes de guardar", "OK");
             }
         }
 
@@ -64,18 +104,8 @@ namespace Ejercicio_2._2_Grupo2
 
         private async void BtnMostrar_Clicked(object sender, EventArgs e)
         {
-            try
-            {
-                (new FirmaDao()).ver(firmas => {
-                    if(firmas != null && firmas.Count > 0)
-                        DisplayAlert("Info", $"Firmas: {firmas.Last().Nombre}, {firmas.Last().Descripcion}", "OK");
-                });
-                
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Error", $"Error al cargar las firmas: {ex.Message}", "OK");
-            }
+            await Navigation.PushAsync(new ListPage());
+           
         }
     }
 }

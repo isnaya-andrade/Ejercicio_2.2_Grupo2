@@ -9,6 +9,7 @@
             <local:SignaturePadView x:Name="signaturePad"
                                     BackgroundColor="LightGray"
                                     HeightRequest="200" />
+            
         </Frame>
 
      

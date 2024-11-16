@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Ejercicio_2._2_Grupo2"
+             x:Class="Ejercicio_2._2_Grupo2.Views.ListPage">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <CollectionView ItemsSource="{Binding SignaturesList}"
+                    EmptyView="No hay firmas disponibles">
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <Frame Margin="10" Padding="10">
+                    <Grid RowDefinitions="Auto,Auto,*">
+                        <Label Text="{Binding Nombre}"
+                               FontSize="18"
+                               FontAttributes="Bold"/>
+
+                        <Label Text="{Binding Descripcion}"
+                               Grid.Row="1"
+                               FontSize="14"/>
+
+                        <Image Source="{Binding FirmaDigital, Converter={StaticResource ByteArrayToImageConverter}}"
+                               HeightRequest="100"
+                               WidthRequest="200"
+                               Aspect="AspectFit"
+                               BackgroundColor="LightGray"/>
+                    </Grid>
+                </Frame>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+</ContentPage>
